@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Secret Chat</string>
+    <string name="name">Name\n</string>
+    <string name="status">Online</string>
+    <string name="edit">Edit\n</string>
+    <string name="edit_message">Edit Message</string>
 </resources>

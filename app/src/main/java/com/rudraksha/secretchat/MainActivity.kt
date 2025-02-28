@@ -25,8 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rudraksha.secretchat.data.model.Message
 import com.rudraksha.secretchat.data.remote.ChatClient
 import com.rudraksha.secretchat.ui.theme.SecretChatTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,19 +38,20 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SecretChatTheme {
+//                ChatListScreen()
                 ChatApp()
             }
         }
     }
 }
-
+var userName: String = ""
 
 @Composable
 fun ChatApp() {
     var username by remember { mutableStateOf("") }
     var isConnected by remember { mutableStateOf(false) }
     var recipient by remember { mutableStateOf("") }
-    val messages = remember { mutableStateListOf<String>() }
+    val messages = remember { mutableStateListOf<Message>() }
     val chatClient = remember { ChatClient() }
 
     if (!isConnected) {
@@ -54,7 +59,8 @@ fun ChatApp() {
             modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
         ) {
             TextField(
                 value = username,
@@ -66,19 +72,26 @@ fun ChatApp() {
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = {
-                        isConnected = true;
-                        chatClient.connect(
-                            username,
-                            messages
-                        )
+                        CoroutineScope(Dispatchers.Default).launch {
+                            isConnected = true;
+                            chatClient.connect(
+                                username,
+                                messages
+                            )
+                        }
                     }
                 )
             )
 
             Button(
                 onClick = {
-                    chatClient.connect(username, messages)
-                    isConnected = true;
+                    CoroutineScope(Dispatchers.Default).launch {
+                        isConnected = true;
+                        chatClient.connect(
+                            username,
+                            messages
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,7 +105,6 @@ fun ChatApp() {
             .fillMaxSize()
             .padding(16.dp)
         ) {
-            Text("Connected as $username")
             Spacer(modifier = Modifier.height(8.dp))
 
             TextField(
@@ -115,13 +127,28 @@ fun ChatApp() {
                     .padding(8.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = {
-                    chatClient.sendMessage("$recipient: ${message.value}")
+                    chatClient.sendMessage(
+                        Message(
+                            content = message.value,
+                            senderId = username,
+                            receiversId = listOf(recipient)
+                        )
+                    )
                     message.value = ""
                 })
             )
 
             Button(
-                onClick = { chatClient.sendMessage("$recipient: ${message.value}") },
+                onClick = {
+                    userName = username
+                    chatClient.sendMessage(
+                        Message(
+                            content = message.value,
+                            senderId = username,
+                            receiversId = listOf(recipient)
+                        )
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp)
@@ -131,7 +158,9 @@ fun ChatApp() {
 
             Spacer(modifier = Modifier.height(16.dp))
             Text("Chat Messages:")
-            messages.forEach { msg -> Text(msg) }
+            messages.forEach { msg ->
+                Text("${msg.senderId}: ${msg.content}")
+            }
         }
     }
 }
