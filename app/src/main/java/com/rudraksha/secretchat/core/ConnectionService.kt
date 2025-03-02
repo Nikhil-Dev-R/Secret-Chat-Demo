@@ -46,7 +46,15 @@ class ConnectionService : Service() {
         val notification = createNotification()
         startForeground(NOTIFICATION_ID, notification)
 
-        connectWebSocket()
+        serviceScope.launch {
+            chatClient = ChatClient(username, messages)
+            chatClient.connect()
+            chatClient.setOnMessageReceivedListener { message ->
+                // Handle received message
+                messages.add(message)
+            }
+        }
+//        connectWebSocket()
 
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         networkCallback = object : NetworkCallback(){
@@ -73,14 +81,7 @@ class ConnectionService : Service() {
     }
 
     private fun connectWebSocket() {
-        serviceScope.launch {
-            chatClient = ChatClient(username, messages)
-            chatClient.connect()
-            chatClient.setOnMessageReceivedListener { message ->
-                // Handle received message
-                messages.add(message)
-            }
-        }
+
     }
 
     private fun createNotificationChannel() {

@@ -5,11 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 
-class NetworkReceiver(private val onNetworkAvailable: () -> Unit): BroadcastReceiver() {
+class NetworkChangeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context != null && isNetworkAvailable(context)) {
-            onNetworkAvailable()
+            onNetworkAvailable(context)
         }
     }
 
@@ -20,5 +22,10 @@ class NetworkReceiver(private val onNetworkAvailable: () -> Unit): BroadcastRece
         val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
 
         return networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+    }
+
+    private fun onNetworkAvailable(context: Context): Unit {
+        val workRequest = OneTimeWorkRequest.from(WebSocketWorker::class.java)
+        WorkManager.getInstance(context).enqueue(workRequest)
     }
 }

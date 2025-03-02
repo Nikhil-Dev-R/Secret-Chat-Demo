@@ -17,10 +17,13 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -41,20 +44,23 @@ class ChatClient(
     private var onMessageReceived: ((Message) -> Unit)? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    val isConnected = MutableStateFlow(false)
+    var isConnected = MutableStateFlow(false)
+    private var connectionJob: Job? = null
 
     fun connect(username: String = this.username, messages: MutableList<Message> = this.messages) {
-        scope.launch {
-            while (true) {
-                try {
-                    webSocketSession = client.webSocketSession(
-                        host = HOST,
-                        port = PORT,
-                        path = "/chat/$username"
-                    )
-                    isConnected.value = true
+        // Cancel any existing connection job
+        connectionJob?.cancel()
 
-                    scope.launch {
+        connectionJob = scope.launch {
+            isConnected.update { true } // Update isConnected to true when the coroutine starts
+            try {
+                while (this.isActive) { // Use isActive to check if the coroutine is still active
+                    try {
+                        webSocketSession = client.webSocketSession(
+                            host = HOST, port = PORT, path = "/chat/$username"
+                        )
+
+                        // Only one coroutine to handle incoming messages
                         webSocketSession?.incoming?.consumeEach { frame ->
                             when (frame) {
                                 is Frame.Text -> {
@@ -63,18 +69,30 @@ class ChatClient(
                                     onMessageReceived?.invoke(message)
                                 }
                                 is Frame.Binary -> {
+                                    // Handle binary frames if needed
                                 }
                                 else -> {
+                                    // Handle other frame types if needed
                                 }
                             }
                         }
+                        // If we reach here, the connection was closed gracefully
+                        Log.d("WebSocket", "Connection closed gracefully")
+                        break // Exit the loop if the connection is closed gracefully
+                    } catch (e: Exception) {
+                        e.localizedMessage?.let { Log.e("Exception", it) }
+                        isConnected.update { false }
+                        // Check if the coroutine is still active before retrying
+                        if (isActive) {
+                            delay(5000) // Retry connection
+                        }
+                    } finally {
+                        // Ensure the session is closed in any case
+                        webSocketSession?.close()
                     }
-
-                } catch (e: Exception) {
-                    e.localizedMessage?.let { Log.e("Exception", it) }
-                    isConnected.value = false
-                    delay(5000) // Retry connection
                 }
+            } finally {
+                isConnected.update { false } // Update isConnected to false when the coroutine ends
             }
         }
     }
@@ -145,6 +163,7 @@ class ChatClient(
     }
 
     suspend fun disconnect() {
+        connectionJob?.cancel()
         webSocketSession?.close(
             CloseReason(CloseReason.Codes.NORMAL, "Disconnecting the client")
         )

@@ -8,51 +8,63 @@ class FakeUsers {
     val users = listOf(
         User(
             id = UUID.randomUUID().toString(),
-            name = "Ram"
+            username = "@ram",
+            fullName = "Ram"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Shyam"
+            username = "@shyam",
+            fullName = "Shyam"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Mohan"
+            fullName = "Mohan",
+            username = "@mohan"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Radha"
+            fullName = "Radha",
+            username = "@radha"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Krishna"
+            fullName = "Krishna",
+            username = "@krishna"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Manmohan"
+            fullName = "Manmohan",
+            username = "@manmmohan"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Balram"
+            fullName = "Balram",
+            username = "@balram"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Kanha"
+            fullName = "Kanha",
+            username = "@kanha"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Lakshman"
+            fullName = "Lakshman",
+            username = "@lakshman"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Sita"
+            fullName = "Sita",
+            username = "@sita"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Dashrath"
+            fullName = "Dashrath",
+            username = "@dashrath"
         ),
         User(
             id = UUID.randomUUID().toString(),
-            name = "Mate"
+            fullName = "Mate",
+            username = "@mate"
         ),
     )
 }

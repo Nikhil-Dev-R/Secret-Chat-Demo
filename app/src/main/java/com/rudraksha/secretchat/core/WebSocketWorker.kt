@@ -24,14 +24,14 @@ class WebSocketWorker(appContext: Context, workerParams: WorkerParameters):
      *   dependent work will not execute if you return [ListenableWorker.Result.failure]
      */
     override suspend fun doWork(): Result {
-        if (!isServiceRunning(ConnectionService::class.java)) {
+        if (!isWorkerWorking()) {
             val serviceIntent = Intent(applicationContext, ConnectionService::class.java)
             applicationContext.startForegroundService(serviceIntent)
         }
         return Result.success()
     }
 
-    private fun isServiceRunning(serviceClass: Class<*>): Boolean {
+    private fun isWorkerWorking(): Boolean {
         val workManager = WorkManager.getInstance(applicationContext)
         val workInfos = workManager.getWorkInfosByTag("WebSocketWorkerConnection").get()
         return workInfos.any {

@@ -1,4 +1,4 @@
-package com.rudraksha.secretchat
+package com.rudraksha.secretchat.ui.utils
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme

@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,10 +50,10 @@ var userName: String = ""
 @Composable
 fun ChatApp() {
     var username by remember { mutableStateOf("") }
-    var isConnected by remember { mutableStateOf(false) }
     var recipient by remember { mutableStateOf("") }
     val messages = remember { mutableStateListOf<Message>() }
     val chatClient = remember { ChatClient() }
+    val isConnected by chatClient.isConnected.collectAsState()
 
     if (!isConnected) {
         Column(
@@ -73,7 +74,6 @@ fun ChatApp() {
                 keyboardActions = KeyboardActions(
                     onDone = {
                         CoroutineScope(Dispatchers.Default).launch {
-                            isConnected = true;
                             chatClient.connect(
                                 username,
                                 messages
@@ -86,7 +86,6 @@ fun ChatApp() {
             Button(
                 onClick = {
                     CoroutineScope(Dispatchers.Default).launch {
-                        isConnected = true;
                         chatClient.connect(
                             username,
                             messages
@@ -148,6 +147,7 @@ fun ChatApp() {
                             receiversId = listOf(recipient)
                         )
                     )
+                    message.value = ""
                 },
                 modifier = Modifier
                     .fillMaxWidth()
